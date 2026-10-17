@@ -43,8 +43,7 @@ void xps_core_destroy(xps_core_t *core) {
   /* destory all the listeners and de-initialize core->listeners */
   for (int i = 0; i < core->listeners.length; i++) {
 
-      xps_listener_t *listener =
-          core->listeners.data[i];
+      xps_listener_t *listener =core->listeners.data[i];
 
       if (listener != NULL) {
           xps_listener_destroy(listener);
@@ -65,25 +64,14 @@ void xps_core_start(xps_core_t *core) {
 
     for (u_int port = 8001; port <= 8004; port++) {
 
-        xps_listener_t *listener =
-            xps_listener_create(core, "0.0.0.0", port);
+        xps_listener_t *listener =xps_listener_create(core, "0.0.0.0", port);
 
         if (listener == NULL) {
-            logger(
-                LOG_ERROR,
-                "xps_start()",
-                "failed to create listener on port %u",
-                port
-            );
+            logger(LOG_ERROR,"xps_start()","failed to create listener on port %u",port);
             continue;
         }
 
-        logger(
-            LOG_INFO,
-            "xps_start()",
-            "Server listening on http://0.0.0.0:%u",
-            port
-        );
+        logger(LOG_INFO,"xps_start()","Server listening on http://0.0.0.0:%u",port);
     }
 
     xps_loop_run(core->loop);

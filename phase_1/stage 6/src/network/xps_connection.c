@@ -23,10 +23,8 @@ xps_connection_t *xps_connection_create(int epoll_fd, int sock_fd) {
 }
 
 void xps_connection_destroy(xps_connection_t *connection) {
-
   /* validate params */
   assert(connection != NULL);
-
   /* set connection to NULL in 'connections' list */
   for (int i = 0; i < connections.length; i++) {
     xps_connection_t *curr = connections.data[i];
@@ -36,21 +34,15 @@ void xps_connection_destroy(xps_connection_t *connection) {
         break;
     }
   }
-
   /* detach connection from loop */
   xps_loop_detach(connection->epoll_fd, connection->sock_fd);
-
   /* close connection socket FD */
   close(connection->sock_fd);
-
   /* free connection->remote_ip */
   free(connection->remote_ip);
-
   /* free connection instance */
   free(connection);
-
   logger(LOG_DEBUG, "xps_connection_destroy()", "destroyed connection");
-
 }
 
 void xps_connection_read_handler(xps_connection_t *connection) {
