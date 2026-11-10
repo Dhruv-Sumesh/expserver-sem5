@@ -40,9 +40,6 @@ int http_process_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 
     // port number
     char *port_str = str_from_ptrs(http_req->port_start, http_req->port_end);
-    // if port_str is null assign default port number 80 for http and 443 for https
-    // if not null assign atoi(port_str)
-
     if(port_str == NULL) {
         if(http_req->schema != NULL && strcmp(http_req->schema, "https") == 0) {
             http_req->port = 443;
@@ -94,7 +91,7 @@ int http_process_headers(xps_http_req_t *http_req, xps_buffer_t *buff) {
         }
         return OK;
     }
-    /*error occurs, thus iterate through header list, free each header*/
+    /*error occurs*/
     vec_void_t *headers = &http_req->headers;
     for (int i = 0; i < headers->length; i++) {
         xps_keyval_t *header = (xps_keyval_t *)headers->data[i];
@@ -102,7 +99,6 @@ int http_process_headers(xps_http_req_t *http_req, xps_buffer_t *buff) {
         free(header->val);
         free(header);
     }
-    /*deinitialize headers list*/
     vec_deinit(headers);
     return error;
 }
@@ -111,21 +107,21 @@ xps_buffer_t *xps_http_req_serialize(xps_http_req_t *http_req) {
     assert(http_req != NULL);
 
     xps_buffer_t *headers_str = xps_http_serialize_headers(&http_req->headers);
-    size_t final_len = strlen(http_req->request_line) + 1 + headers_str->len + 1;   /*Calculate length for final buffer*/
-    /*Create instance for final buffer*/
+    size_t final_len = strlen(http_req->request_line) + 1 + headers_str->len + 1; 
+    
     xps_buffer_t *buff = xps_buffer_create(final_len + 1, final_len, NULL);
     buff->pos = buff->data;
-    /*Copy everything to final buffer*/
+    
     memcpy(buff->pos, http_req->request_line, strlen(http_req->request_line));
     buff->pos += strlen(http_req->request_line);
-    /*similarly copy "\n", headers_str, "\n"*/
+    
     memcpy(buff->pos, "\n", 1);
     buff->pos += 1;
     memcpy(buff->pos, headers_str->data, headers_str->len);
     buff->pos += headers_str->len;
     memcpy(buff->pos, "\n", 1);
     buff->pos += 1;
-    /*destroy headers_str buffer*/
+
     xps_buffer_destroy(headers_str);
     return buff;
 }
@@ -134,23 +130,22 @@ xps_http_req_t *xps_http_req_create(xps_core_t *core, xps_buffer_t *buff, int *e
     assert(core && buff);
 
     *error = E_FAIL;
-    /* Alloc memory for http_req instance*/
+  
     xps_http_req_t *http_req = malloc(sizeof(xps_http_req_t));
     if (http_req == NULL) {
         logger(LOG_ERROR, "xps_http_req_create()", "malloc() failed for 'http_req'");
         return NULL;
     }
     memset(http_req, 0, sizeof(xps_http_req_t));
-    /*Set initial parser state*/
+    
     http_req->parser_state = RL_START;
-    /*Process request line and handle possible errors*/
+    
     int rc = http_process_request_line(http_req, buff);
     if (rc != OK) {
         free(http_req);
         *error = rc;
         return NULL;
     }
-    /*Process headers and handle possible errors*/
     rc = http_process_headers(http_req, buff);
     if (rc != OK) {
         free(http_req);
@@ -159,10 +154,8 @@ xps_http_req_t *xps_http_req_create(xps_core_t *core, xps_buffer_t *buff, int *e
     }
     // Header length
     http_req->header_len = (size_t)(buff->pos - buff->data);
-    // Body length is retrieved from header Content-Length
     http_req->body_len = 0;
     const char *body_len_str = xps_http_get_header(&http_req->headers, "Content-Length");
-    /*assign body_len*/
     if (body_len_str != NULL) {
         http_req->body_len = (size_t)atoi(body_len_str);
     }
@@ -172,7 +165,6 @@ xps_http_req_t *xps_http_req_create(xps_core_t *core, xps_buffer_t *buff, int *e
 
 void xps_http_req_destroy(xps_core_t *core, xps_http_req_t *http_req) {
     assert(http_req != NULL);
-    /*Frees memory allocated for various components of the HTTP request line(request line, method,etc)*/
     if(http_req->request_line) free(http_req->request_line);
     if(http_req->method) free(http_req->method);
     if(http_req->uri) free(http_req->uri);
@@ -181,7 +173,6 @@ void xps_http_req_destroy(xps_core_t *core, xps_http_req_t *http_req) {
     if(http_req->path) free(http_req->path);
     if(http_req->pathname) free(http_req->pathname);
     if(http_req->http_version) free(http_req->http_version);
-    /*iterate through the headers list of http_req and free the memory*/
     vec_void_t *headers = &http_req->headers;
     for (int i = 0; i < headers->length; i++) {
         xps_keyval_t *header = (xps_keyval_t *)headers->data[i];
@@ -189,8 +180,6 @@ void xps_http_req_destroy(xps_core_t *core, xps_http_req_t *http_req) {
         free(header->val);
         free(header);
     }
-    /*de-intialize the headers list*/
     vec_deinit(headers);
-    /*free http_req*/
     free(http_req);
 }

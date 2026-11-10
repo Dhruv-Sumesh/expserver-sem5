@@ -14,7 +14,6 @@ bool http_strcmp(u_char *str, const char *method, size_t length){
 }
 
 int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
-  /*get current parser state*/
     xps_http_parser_state_t parser_state = http_req->parser_state;
     u_char *p_ch = buff->pos;
 
@@ -23,7 +22,6 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
         switch (parser_state) {
         
             case RL_START:
-                /*assign request_line_start, ignore CR and LF, fail if not upper case, assign method_start*/
                 http_req->request_line_start=p_ch;
                 if(ch==CR || ch==LF) break;
                 if(ch<'A' || ch>'Z') return E_FAIL;
@@ -106,11 +104,7 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 				break;
 
             case RL_HOST:
-                /*host can have lower case alphabets, numbers, '-', '.' */
-                /*on ':' - host ends, for start of port assign next position, next state is RL_PORT*/
-                /*on '/' - host ends, assign start of path,pathname, end of port, next state is RL_PATH*/
-                /*on ' ' - host ends, assign end of uri, start and end of port,path,pathname, next state is RL_VERSION_START*/
-                /*on all other input, fails*/
+
                 if(ch == ':') {
 					http_req->host_end = p_ch;
 					http_req->port_start = p_ch + 1;
@@ -137,10 +131,7 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 				break;
 
             case RL_PORT:
-                /*port can only have numbers */
-                /*on '/' - port ends, assign start of path,pathname, next state is RL_PATH*/
-                /*on ' ' - port ends, assign end of uri, start and end of path,pathname, next state is RL_VERSION_START*/
-                /*on all other input, fails*/
+
                 if(ch == '/') {
 					http_req->port_end = p_ch;
 					http_req->path_start = p_ch + 1;
@@ -160,9 +151,7 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 				break;
 
             case RL_PATH:
-                /*on ' ' - path ends, assign end of path,pathname,uri next state is RL_VERSION_START*/
-                /*on '?'or'&'or'='or'#' - assign end of path, next state is RL_PATHNAME*/
-                /*on CR or LF, fails*/
+*/
                 if(ch == ' ') {
 					http_req->path_end = p_ch;
 					http_req->pathname_end = p_ch;
@@ -177,8 +166,7 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 				break;
 
             case RL_PATHNAME:
-                /*on ' ' - assign end of uri,pathname, next state is RL_VERSION_START*/
-                /*on CR or LF, fails*/
+                
                 if(ch == ' ') {
 					http_req->uri_end = p_ch;
 					http_req->pathname_end = p_ch;
@@ -222,14 +210,10 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 				break;
 
             case RL_VERSION_MAJOR:
-                /*fill ths*/
                 if(ch == '.') parser_state = RL_VERSION_DOT;
 				else return E_FAIL;
 				break;
 
-            /* Change this section in xps_http.c */
-
-			case RL_VERSION_DOT:
 				if (ch == '0' || ch == '1') {
 					parser_state = RL_VERSION_MINOR;
 				} else {
@@ -239,10 +223,10 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 
 			case RL_VERSION_MINOR:
 				if (ch == CR) {
-					http_req->http_minor = p_ch; // Set end pointer AFTER the digit
+					http_req->http_minor = p_ch; 
 					parser_state = RL_CR;
 				} else if (ch == LF) {
-					http_req->http_minor = p_ch; // Set end pointer AFTER the digit
+					http_req->http_minor = p_ch; 
 					parser_state = RL_LF;
 				} else {
 					return E_FAIL;
@@ -348,20 +332,20 @@ int xps_http_parse_header_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 					parser_state = H_START;
 					buff->pos = p_ch;
 					http_req->parser_state = parser_state;
-					return E_NEXT; // This header is done, repeat for the next
+					return E_NEXT; 
 				}
 				break;
 
 			case H_LF_LF:
 				buff->pos = p_ch;
 				http_req->parser_state = H_START;
-				return OK; // HTTP complete header section done
+				return OK; 
 
 			case H_LF_CR:
 				if (ch == LF) {
 					buff->pos = p_ch;
 					http_req->parser_state = H_START;
-					return OK; // HTTP complete header section done
+					return OK; 
 				} else {
 					return E_FAIL;
 				}
@@ -388,7 +372,7 @@ const char *xps_http_get_header(vec_void_t *headers, const char *key) {
 
 xps_buffer_t *xps_http_serialize_headers(vec_void_t *headers) {
 	assert(headers);
-	/*create a buffer and initialize first byte to null terminator*/
+	
 	xps_buffer_t *buff = malloc(sizeof(xps_buffer_t));
 	if(buff == NULL) return NULL;
 	buff->size = DEFAULT_BUFFER_SIZE;

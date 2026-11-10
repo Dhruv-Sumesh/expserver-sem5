@@ -23,7 +23,7 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
         switch (parser_state) {
         
             case RL_START:
-                /*assign request_line_start, ignore CR and LF, fail if not upper case, assign method_start*/
+                
                 http_req->request_line_start=p_ch;
                 if(ch==CR || ch==LF) break;
                 if(ch<'A' || ch>'Z') return E_FAIL;
@@ -79,13 +79,12 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
                 break;
 
             case RL_SCHEMA:
-                /*on lower case alphabets break ie schema can have lower case alphabets*/
-				/*schema ends on ':' ,next state is RL_SCHEMA_SLASH*/
+                
 				if(ch == ':'){
 					http_req->schema_end = p_ch;
 					parser_state = RL_SCHEMA_SLASH;
 				}
-				/*fails on all other inputs*/
+				
 				else {
 					char c = ch|0x20; //convert to lower case
 					if(c < 'a' || c > 'z') return E_FAIL;
@@ -106,11 +105,7 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 				break;
 
             case RL_HOST:
-                /*host can have lower case alphabets, numbers, '-', '.' */
-                /*on ':' - host ends, for start of port assign next position, next state is RL_PORT*/
-                /*on '/' - host ends, assign start of path,pathname, end of port, next state is RL_PATH*/
-                /*on ' ' - host ends, assign end of uri, start and end of port,path,pathname, next state is RL_VERSION_START*/
-                /*on all other input, fails*/
+                
                 if(ch == ':') {
 					http_req->host_end = p_ch;
 					http_req->port_start = p_ch + 1;
@@ -137,10 +132,7 @@ int xps_http_parse_request_line(xps_http_req_t *http_req, xps_buffer_t *buff) {
 				break;
 
             case RL_PORT:
-                /*port can only have numbers */
-                /*on '/' - port ends, assign start of path,pathname, next state is RL_PATH*/
-                /*on ' ' - port ends, assign end of uri, start and end of path,pathname, next state is RL_VERSION_START*/
-                /*on all other input, fails*/
+                
                 if(ch == '/') {
 					http_req->port_end = p_ch;
 					http_req->path_start = p_ch + 1;
