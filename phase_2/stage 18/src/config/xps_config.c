@@ -1,5 +1,4 @@
 #include "../xps.h"
-
 xps_config_t *xps_config_create(const char *config_path){
     assert(config_path!=NULL);
     xps_config_t *config=calloc(1,sizeof(xps_config_t));
@@ -18,7 +17,7 @@ xps_config_t *xps_config_create(const char *config_path){
     }
     JSON_Object *root_object=json_value_get_object(config->_config_json);
     if(root_object==NULL){
-        logger(LOG_ERROR,"xps_config_create()","invalid JSON root object");
+        logger(LOG_ERROR,"xps_config_create()","invalid json root object");
         xps_config_destroy(config);
         return NULL;
     }
@@ -107,8 +106,7 @@ xps_config_t *xps_config_create(const char *config_path){
             vec_init(&route->index);
             vec_init(&route->upstreams);
             vec_init(&route->ip_whitelist);
-    	    vec_init(&route->ip_blacklist); 
-           
+    	    vec_init(&route->ip_blacklist);
             if(route->req_path==NULL||route->type==NULL){
                 logger(LOG_ERROR,"xps_config_create()","invalid route configuration");
                 free(route);
@@ -144,26 +142,23 @@ xps_config_t *xps_config_create(const char *config_path){
                     vec_push(&route->upstreams,(void *)upstream);
                 }
             }
-                        // applies to every route type
             JSON_Array *ip_whitelist=json_object_get_array(route_object,"ip_whitelist");
             JSON_Array *ip_blacklist=json_object_get_array(route_object,"ip_blacklist");
-
-            if(ip_whitelist && !ip_blacklist){
+            if(ip_whitelist&&!ip_blacklist){
                 for(size_t k=0;k<json_array_get_count(ip_whitelist);k++)
                     vec_push(&route->ip_whitelist,(void *)json_array_get_string(ip_whitelist,k));
             }
-            else if(ip_blacklist && !ip_whitelist){
+            else if(ip_blacklist&&!ip_whitelist){
                 for(size_t k=0;k<json_array_get_count(ip_blacklist);k++)
                     vec_push(&route->ip_blacklist,(void *)json_array_get_string(ip_blacklist,k));
             }
-            else if(ip_whitelist && ip_blacklist){
-                //only whitelisted ips that are not blacklisted
+            else if(ip_whitelist&&ip_blacklist){
                 for(size_t k=0;k<json_array_get_count(ip_whitelist);k++){
                     const char *w=json_array_get_string(ip_whitelist,k);
                     bool blocked=false;
                     for(size_t m=0;m<json_array_get_count(ip_blacklist);m++){
                         const char *b=json_array_get_string(ip_blacklist,m);
-                        if(w && b && strcmp(w,b)==0){
+                        if(w&&b&&strcmp(w,b)==0){
 		            blocked=true;
 		            break;
                         }
@@ -171,7 +166,6 @@ xps_config_t *xps_config_create(const char *config_path){
                     if(!blocked)
                     	vec_push(&route->ip_whitelist,(void *)w);
                 }
-                //every whitelisted ip was blacklisted. empty whitelist would mean allow all. so add a placeholder that never matches
                 if(route->ip_whitelist.length==0)
                     vec_push(&route->ip_whitelist,(void *)"");
             }
@@ -182,65 +176,51 @@ xps_config_t *xps_config_create(const char *config_path){
     logger(LOG_DEBUG,"xps_config_create()","created config");
     return config;
 }
-
-
-
 void xps_config_destroy(xps_config_t *config){
     assert(config!=NULL);
-
     for(int i=0;i<config->servers.length;i++){
         xps_config_server_t *server=config->servers.data[i];
-
         for(int j=0;j<server->listeners.length;j++){
             xps_config_listener_t *listener=server->listeners.data[j];
             free(listener);
         }
-
         vec_deinit(&server->listeners);
         vec_deinit(&server->hostnames);
-
         for(int j=0;j<server->routes.length;j++){
             xps_config_route_t *route=server->routes.data[j];
-
             vec_deinit(&route->index);
             vec_deinit(&route->upstreams);
             vec_deinit(&route->ip_whitelist);
             vec_deinit(&route->ip_blacklist);
             free(route);
         }
-
         vec_deinit(&server->routes);
         free(server);
     }
-
     vec_deinit(&config->servers);
     vec_deinit(&config->_all_listeners);
-
     json_value_free(config->_config_json);
     free(config);
 }
-
 static bool config_path_is_within(const char *root,const char *path){
     size_t len=strlen(root);
     if(strncmp(root,path,len)!=0)return false;
     if(len==1&&root[0]=='/')return true;
     return path[len]=='\0'||path[len]=='/';
 }
-
 xps_config_lookup_t *xps_config_lookup(xps_config_t *config,xps_http_req_t *http_req,xps_connection_t *client,int *error){
     assert(config!=NULL);
     assert(http_req!=NULL);
     assert(client!=NULL);
     assert(error!=NULL);
     *error=E_FAIL;
-
     xps_config_server_t *selected_server=NULL;
     for(int i=0;i<config->servers.length;i++){
         xps_config_server_t *server=config->servers.data[i];
         bool listener_match=false;
         for(int j=0;j<server->listeners.length;j++){
             xps_config_listener_t *listener=server->listeners.data[j];
-            if(listener->port==client->listener->port && strcmp(listener->host,client->listener->host)==0){
+            if(listener->port==client->listener->port&&strcmp(listener->host,client->listener->host)==0){
                 listener_match=true;
                 break;
             }
@@ -254,7 +234,6 @@ xps_config_lookup_t *xps_config_lookup(xps_config_t *config,xps_http_req_t *http
         if(selected_server!=NULL)break;
     }
     if(selected_server==NULL){*error=E_NOTFOUND;return NULL;}
-
     xps_config_route_t *selected_route=NULL;
     size_t best_match_len=0;
     for(int i=0;i<selected_server->routes.length;i++){
@@ -266,12 +245,10 @@ xps_config_lookup_t *xps_config_lookup(xps_config_t *config,xps_http_req_t *http
         }
     }
     if(selected_route==NULL){*error=E_NOTFOUND;return NULL;}
-
     xps_config_lookup_t *lookup=calloc(1,sizeof(xps_config_lookup_t));
     if(lookup==NULL)return NULL;
     lookup->ip_whitelist=selected_route->ip_whitelist;
     lookup->ip_blacklist=selected_route->ip_blacklist;
-
     if(strcmp(selected_route->type,"file_serve")==0){
         lookup->type=REQ_FILE_SERVE;
         if(selected_route->dir_path!=NULL){
@@ -296,7 +273,6 @@ xps_config_lookup_t *xps_config_lookup(xps_config_t *config,xps_http_req_t *http
 			}
 			free(index_path);
 		    }
-		    // no index file: fall back to directory browsing
 		    if(index_found)free(resolved);
 		    else lookup->dir_path=resolved;
 		}else free(resolved);
@@ -313,11 +289,9 @@ xps_config_lookup_t *xps_config_lookup(xps_config_t *config,xps_http_req_t *http
         lookup->redirect_url=selected_route->redirect_url;
     }else if(strcmp(selected_route->type,"metrics")==0)lookup->type=REQ_METRICS;
     else lookup->type=REQ_INVALID;
-
     *error=OK;
     return lookup;
 }
-
 void xps_config_lookup_destroy(xps_config_lookup_t *lookup,xps_core_t *core){
     (void)core;
     if(lookup==NULL)return;

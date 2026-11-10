@@ -1,45 +1,37 @@
 #ifndef XPS_H
 #define XPS_H
 #define _GNU_SOURCE
-// Header files
-#include <arpa/inet.h>
-#include <assert.h>
-#include <netdb.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <sys/epoll.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <ctype.h>
-#include <zlib.h> 
-
-// 3rd party libraries
-#include "lib/vec/vec.h" // https://github.com/rxi/vec
+#include<arpa/inet.h>
+#include<assert.h>
+#include<netdb.h>
+#include<stdbool.h>
+#include<stdio.h>
+#include<stdarg.h>
+#include<sys/epoll.h>
+#include<sys/socket.h>
+#include<unistd.h>
+#include<sys/stat.h>
+#include<sys/types.h>
+#include<signal.h>
+#include<fcntl.h>
+#include<errno.h>
+#include<ctype.h>
+#include<zlib.h>
+#include "lib/vec/vec.h"
 #include "lib/parson/parson.h"
-
-// Constants
 #define DEFAULT_BACKLOG 64
 #define MAX_EPOLL_EVENTS 32
-#define DEFAULT_BUFFER_SIZE 100000 // 100 KB
-#define DEFAULT_PIPE_BUFF_THRESH 1000000 //1MB
+#define DEFAULT_BUFFER_SIZE 100000
+#define DEFAULT_PIPE_BUFF_THRESH 1000000
 #define DEFAULT_NULLS_THRESH 32
 #define SERVER_NAME "eXpServer"
-
-#define OK 0            // Success
-#define E_FAIL -1       // Un-recoverable error
-#define E_AGAIN -2      // Try again
-#define E_NEXT -3       // Do next
-#define E_NOTFOUND -4   // File not found
-#define E_PERMISSION -5 // File permission denied
-#define E_EOF -6   
-
-
+#define OK 0
+#define E_FAIL -1
+#define E_AGAIN -2
+#define E_NEXT -3
+#define E_NOTFOUND -4
+#define E_PERMISSION -5
+#define E_EOF -6
 typedef enum {
   HTTP_GET,
   HTTP_HEAD,
@@ -50,52 +42,44 @@ typedef enum {
   HTTP_TRACE,
   HTTP_CONNECT,
 } xps_http_method_t;
-
 typedef enum {
-  HTTP_OK = 200,
-  HTTP_CREATED = 201,
-
-  HTTP_MOVED_PERMANENTLY = 301,
-  HTTP_MOVED_TEMPORARILY = 302,
-  HTTP_NOT_MODIFIED = 304,
-  HTTP_TEMPORARY_REDIRECT = 307,
-  HTTP_PERMANENT_REDIRECT = 308,
-
-  HTTP_BAD_REQUEST = 400,
-  HTTP_UNAUTHORIZED = 401,
-  HTTP_FORBIDDEN = 403,
-  HTTP_NOT_FOUND = 404,
-  HTTP_REQUEST_TIME_OUT = 408,
-  HTTP_TOO_MANY_REQUESTS = 429,
-
-  HTTP_INTERNAL_SERVER_ERROR = 500,
-  HTTP_NOT_IMPLEMENTED = 501,
-  HTTP_BAD_GATEWAY = 502,
-  HTTP_SERVICE_UNAVAILABLE = 503,
-  HTTP_GATEWAY_TIMEOUT = 504,
-  HTTP_HTTP_VERSION_NOT_SUPPORTED = 505
+  HTTP_OK=200,
+  HTTP_CREATED=201,
+  HTTP_MOVED_PERMANENTLY=301,
+  HTTP_MOVED_TEMPORARILY=302,
+  HTTP_NOT_MODIFIED=304,
+  HTTP_TEMPORARY_REDIRECT=307,
+  HTTP_PERMANENT_REDIRECT=308,
+  HTTP_BAD_REQUEST=400,
+  HTTP_UNAUTHORIZED=401,
+  HTTP_FORBIDDEN=403,
+  HTTP_NOT_FOUND=404,
+  HTTP_REQUEST_TIME_OUT=408,
+  HTTP_TOO_MANY_REQUESTS=429,
+  HTTP_INTERNAL_SERVER_ERROR=500,
+  HTTP_NOT_IMPLEMENTED=501,
+  HTTP_BAD_GATEWAY=502,
+  HTTP_SERVICE_UNAVAILABLE=503,
+  HTTP_GATEWAY_TIMEOUT=504,
+  HTTP_HTTP_VERSION_NOT_SUPPORTED=505
 } xps_http_status_code_t;
-
 typedef enum {
-  /* Request line states */
-  RL_START = 0,
+  RL_START=0,
   RL_METHOD,
   RL_SP_AFTER_METHOD,
-
   RL_SCHEMA,
   RL_SCHEMA_SLASH,
   RL_SCHEMA_SLASH_SLASH,
-  RL_HOST_START, // maybe Ipv4 or Ipv6
+  RL_HOST_START,
   RL_HOST,
   RL_HOST_END,
-  RL_HOST_IP_LITERAL, // Ipv6; map to RL_HOST_END
+  RL_HOST_IP_LITERAL,
   RL_PORT,
-  RL_SLASH, // path
+  RL_SLASH,
   RL_CHECK_URI,
   RL_PATH,
   RL_PATHNAME,
   RL_SP_AFTER_URI,
-
   RL_VERSION_START,
   RL_VERSION_H,
   RL_VERSION_HT,
@@ -107,9 +91,7 @@ typedef enum {
   RL_VERSION_MINOR,
   RL_CR,
   RL_LF,
-
-  //states
-  H_START = 0,
+  H_START=0,
   H_NAME,
   H_COLON,
   H_SP_AFTER_COLON,
@@ -119,15 +101,10 @@ typedef enum {
   H_LF_CR,
   H_LF_LF,
   H_LF_CR_LF,
-
 } xps_http_parser_state_t;
-
-//dts
 typedef unsigned char u_char;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
-
-//structs
 struct xps_core_s;
 struct xps_loop_s;
 struct xps_listener_s;
@@ -148,8 +125,7 @@ struct xps_config_listener_s;
 struct xps_config_route_s;
 struct xps_config_lookup_s;
 struct xps_cliargs_s;
-struct xps_gzip_s; 
-//typedefs
+struct xps_gzip_s;
 typedef struct xps_core_s xps_core_t;
 typedef struct xps_loop_s xps_loop_t;
 typedef struct xps_listener_s xps_listener_t;
@@ -171,9 +147,7 @@ typedef struct xps_config_route_s xps_config_route_t;
 typedef struct xps_config_lookup_s xps_config_lookup_t;
 typedef struct xps_cliargs_s xps_cliargs_t;
 typedef struct xps_gzip_s xps_gzip_t;
-//typedefs
-typedef void (*xps_handler_t)(void *ptr);
-
+typedef void(*xps_handler_t)(void *ptr);
 #include "core/xps_core.h"
 #include "core/xps_loop.h"
 #include "core/xps_pipe.h"
@@ -194,5 +168,4 @@ typedef void (*xps_handler_t)(void *ptr);
 #include "disk/xps_mime.h"
 #include "disk/xps_directory.h"
 #include "disk/xps_gzip.h"
-
 #endif

@@ -23,7 +23,7 @@ xps_gzip_t *xps_gzip_create(int level){
         return NULL;
     }
     if(deflateInit2(&(gzip->stream),level,Z_DEFLATED,16+MAX_WBITS,8,Z_DEFAULT_STRATEGY)!=Z_OK){
-        logger(LOG_ERROR,"xps_gzip_create()","deflateInit2() failed");
+        logger(LOG_ERROR,"xps_gzip_create()","deflateinit2() failed");
         xps_pipe_source_destroy(gzip->source);
         xps_pipe_sink_destroy(gzip->sink);
         free(gzip);

@@ -1,8 +1,6 @@
 #ifndef XPS_SESSION_H
 #define XPS_SESSION_H
-
 #include "../xps.h"
-
 struct xps_session_s {
   xps_core_t *core;
   xps_connection_t *client;
@@ -22,8 +20,7 @@ struct xps_session_s {
   xps_config_lookup_t *lookup;
   xps_gzip_t *gzip;
 };
-
-xps_session_t *xps_session_create(xps_core_t *core, xps_connection_t *client);
+xps_session_t *xps_session_create(xps_core_t *core,xps_connection_t *client);
 void xps_session_destroy(xps_session_t *session);
 void client_source_handler(void *ptr);
 void client_source_close_handler(void *ptr);
@@ -36,9 +33,8 @@ void upstream_sink_close_handler(void *ptr);
 void upstream_error_res(xps_session_t *session);
 void file_sink_handler(void *ptr);
 void file_sink_close_handler(void *ptr);
-void set_to_client_buff(xps_session_t *session, xps_buffer_t *buff);
-void set_from_client_buff(xps_session_t *session, xps_buffer_t *buff);
+void set_to_client_buff(xps_session_t *session,xps_buffer_t *buff);
+void set_from_client_buff(xps_session_t *session,xps_buffer_t *buff);
 void session_check_destroy(xps_session_t *session);
 void session_process_request(xps_session_t *session);
-
 #endif

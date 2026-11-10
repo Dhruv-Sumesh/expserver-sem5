@@ -1,5 +1,4 @@
 #include "../xps.h"
-
 xps_config_t *xps_config_create(const char *config_path){
     assert(config_path!=NULL);
     xps_config_t *config=calloc(1,sizeof(xps_config_t));
@@ -18,7 +17,7 @@ xps_config_t *xps_config_create(const char *config_path){
     }
     JSON_Object *root_object=json_value_get_object(config->_config_json);
     if(root_object==NULL){
-        logger(LOG_ERROR,"xps_config_create()","invalid JSON root object");
+        logger(LOG_ERROR,"xps_config_create()","invalid json root object");
         xps_config_destroy(config);
         return NULL;
     }
@@ -148,63 +147,49 @@ xps_config_t *xps_config_create(const char *config_path){
     logger(LOG_DEBUG,"xps_config_create()","created config");
     return config;
 }
-
-
-
 void xps_config_destroy(xps_config_t *config){
     assert(config!=NULL);
-
     for(int i=0;i<config->servers.length;i++){
         xps_config_server_t *server=config->servers.data[i];
-
         for(int j=0;j<server->listeners.length;j++){
             xps_config_listener_t *listener=server->listeners.data[j];
             free(listener);
         }
-
         vec_deinit(&server->listeners);
         vec_deinit(&server->hostnames);
-
         for(int j=0;j<server->routes.length;j++){
             xps_config_route_t *route=server->routes.data[j];
-
             vec_deinit(&route->index);
             vec_deinit(&route->upstreams);
             free(route);
         }
-
         vec_deinit(&server->routes);
         free(server);
     }
-
     vec_deinit(&config->servers);
     vec_deinit(&config->_all_listeners);
-
     json_value_free(config->_config_json);
     free(config);
 }
-
 static bool config_path_is_within(const char *root,const char *path){
     size_t len=strlen(root);
     if(strncmp(root,path,len)!=0)return false;
     if(len==1&&root[0]=='/')return true;
     return path[len]=='\0'||path[len]=='/';
 }
-
 xps_config_lookup_t *xps_config_lookup(xps_config_t *config,xps_http_req_t *http_req,xps_connection_t *client,int *error){
     assert(config!=NULL);
     assert(http_req!=NULL);
     assert(client!=NULL);
     assert(error!=NULL);
     *error=E_FAIL;
-
     xps_config_server_t *selected_server=NULL;
     for(int i=0;i<config->servers.length;i++){
         xps_config_server_t *server=config->servers.data[i];
         bool listener_match=false;
         for(int j=0;j<server->listeners.length;j++){
             xps_config_listener_t *listener=server->listeners.data[j];
-            if(listener->port==client->listener->port && strcmp(listener->host,client->listener->host)==0){
+            if(listener->port==client->listener->port&&strcmp(listener->host,client->listener->host)==0){
                 listener_match=true;
                 break;
             }
@@ -218,7 +203,6 @@ xps_config_lookup_t *xps_config_lookup(xps_config_t *config,xps_http_req_t *http
         if(selected_server!=NULL)break;
     }
     if(selected_server==NULL){*error=E_NOTFOUND;return NULL;}
-
     xps_config_route_t *selected_route=NULL;
     size_t best_match_len=0;
     for(int i=0;i<selected_server->routes.length;i++){
@@ -230,12 +214,10 @@ xps_config_lookup_t *xps_config_lookup(xps_config_t *config,xps_http_req_t *http
         }
     }
     if(selected_route==NULL){*error=E_NOTFOUND;return NULL;}
-
     xps_config_lookup_t *lookup=calloc(1,sizeof(xps_config_lookup_t));
     if(lookup==NULL)return NULL;
     vec_init(&lookup->ip_whitelist);
     vec_init(&lookup->ip_blacklist);
-
     if(strcmp(selected_route->type,"file_serve")==0){
         lookup->type=REQ_FILE_SERVE;
         if(selected_route->dir_path!=NULL){
@@ -273,11 +255,9 @@ xps_config_lookup_t *xps_config_lookup(xps_config_t *config,xps_http_req_t *http
         lookup->redirect_url=selected_route->redirect_url;
     }else if(strcmp(selected_route->type,"metrics")==0)lookup->type=REQ_METRICS;
     else lookup->type=REQ_INVALID;
-
     *error=OK;
     return lookup;
 }
-
 void xps_config_lookup_destroy(xps_config_lookup_t *lookup,xps_core_t *core){
     (void)core;
     if(lookup==NULL)return;

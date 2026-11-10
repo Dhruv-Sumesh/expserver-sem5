@@ -1,23 +1,18 @@
-
 #include "xps.h"
 #include "config/xps_config.h"
 #include "utils/xps_cliargs.h"
-
 xps_core_t *core=NULL;
 xps_config_t *config=NULL;
 xps_cliargs_t *cliargs=NULL;
-
 void sigint_handler(int signum);
 int core_create(xps_config_t *config);
 void core_destroy(xps_core_t *core);
-
 static void destroy_unattached_listener(xps_listener_t *listener){
     if(listener!=NULL){
         close(listener->sock_fd);
         free(listener);
     }
 }
-
 int main(int argc,char *argv[]) {
     signal(SIGINT,sigint_handler);
     cliargs=xps_cliargs_create(argc,argv);
@@ -36,7 +31,6 @@ int main(int argc,char *argv[]) {
     core_destroy(core);
     return EXIT_SUCCESS;
 }
-
 int core_create(xps_config_t *config) {
     assert(config!=NULL);
     core=xps_core_create(config);
@@ -79,14 +73,11 @@ int core_create(xps_config_t *config) {
         vec_push(&core->listeners,dup_listener);
         destroy_unattached_listener(listener);
     }
-
     return OK;
 }
-
 void core_destroy(xps_core_t *core) {
     if(core!=NULL)
         xps_core_destroy(core);
-
     if(config!=NULL){
         xps_config_destroy(config);
         config=NULL;
@@ -96,7 +87,6 @@ void core_destroy(xps_core_t *core) {
         cliargs=NULL;
     }
 }
-
 void sigint_handler(int signum) {
     (void)signum;
     logger(LOG_WARNING,"sigint_handler()","SIGINT received");
